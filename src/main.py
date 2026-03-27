@@ -259,6 +259,11 @@ class Simulation:
             n: int, How many people are partaking in the simulation
             people: ndarray, An array of individuals in the simulation
             predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+            labels: list[list[int]], A data structure to hold the predictions made for each person for each step
+            tp: int = 0, True positives
+            fp: int = 0, False positives
+            tn: int = 0, True negatives
+            fn: int = 0, False negatives
     ----------
     Methods:
         Instance:
@@ -286,6 +291,10 @@ class Simulation:
             people: ndarray, An array of individuals in the simulation
             predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
             labels: list[list[int]], A data structure to hold the predictions made for each person for each step
+            tp: int = 0, True positives
+            fp: int = 0, False positives
+            tn: int = 0, True negatives
+            fn: int = 0, False negatives
         """
         self.x: int = x
         """The amount of money in box 1 (revealed box)"""
@@ -299,7 +308,7 @@ class Simulation:
         """How many people are partaking in the simulation"""
         self.people: ndarray = array(
             [
-                Person(chance = self.chances()) for _ in range(self.n)
+                Person(chance = self.chances) for _ in range(self.n)
             ],
             dtype = Person
         )
@@ -308,6 +317,14 @@ class Simulation:
         """A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)"""
         self.labels: list[list[int]] = [[0] * self.n]
         """A data structure to hold the predictions made for each person for each step"""
+        self.tp: int = 0
+        """True positives"""
+        self.fp: int = 0
+        """False positives"""
+        self.tn: int = 0
+        """True negatives"""
+        self.fn: int = 0
+        """False negatives"""
 
     def populate(
         self,
@@ -327,16 +344,6 @@ class Simulation:
         else:
             return (self.x, self.z)
 
-    # todo
-    def confusion(self) -> tuple[float, float, float, float]:
-        """
-        Calculates the confusion matrix of the simulation for the robot given with the run done
-        ----------
-        Returns:
-            output: tuple[float, float, float, float], A tuple in structure of (true positives, false positives, true negatives, false negatives)
-        """
-        return ()
-
     def step(self) -> None:
         """
         Does a single simulation cycle for all the people in the simulation
@@ -349,6 +356,14 @@ class Simulation:
             self.labels[-1].append(pred)
             boxes: tuple[int, int] = self.populate(pred)
             actual: int = person.choose()
+            if pred == actual == 1:
+                self.tp += 1
+            elif pred == actual == 2:
+                self.tn += 1
+            elif pred == 1 and actual == 2:
+                self.fp += 1
+            else:
+                self.fn += 1
             if actual == 1:
                 person.currency += boxes[1]
             else:
