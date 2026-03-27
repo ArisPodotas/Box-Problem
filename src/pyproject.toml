@@ -1,0 +1,19 @@
+[project]
+dynamic = ['version']
+name = ''
+description = ''
+keywords = [
+    '',
+]
+version = '0.2.0'
+readme = 'README.md'
+dependencies = [
+
+]
+authors = [
+    {name = "Aris Podotas", email = 'a.Podotas@gmail.com'},
+]
+maintainers = [
+    {name = "Aris Podotas", email = 'a.Podotas@gmail.com'},
+]
+[project.urls]
