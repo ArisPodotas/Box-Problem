@@ -7,7 +7,7 @@ Contains:
         Represents a single person in the problem known as Newcomb's paradox. The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
         ----------
         Arguments:
-            chance: Callable = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
+            chance: Callable[[], float] = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
         ----------
         Attributes:
             Instance:
@@ -32,18 +32,18 @@ Contains:
             y: int = 100000, The amount of money in box 2 (mystery box) when box 2 is the single pick
             z: int = 0, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
             people: int = 1, How many people to simulate
-            chances: Callable = random, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
-            robot: Callable = predict, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+            chances: Callable[[], float] = random, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+            robot: Callable[[Person, Any], int] = predict, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
         ----------
         Attributes:
             Instance:
                 x: int, The amount of money in box 1 (revealed box)
                 y: int, The amount of money in box 2 (mystery box) when box 2 is the single pick
                 z: int, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
-                chances: Callable, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+                chances: Callable[[], float], A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
                 n: int, How many people are partaking in the simulation
                 people: ndarray, An array of individuals in the simulation
-                predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+                predictor: Callable[[Person, Any], int], A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
                 labels: list[list[int]], A data structure to hold the predictions made for each person for each step
                 tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
                 fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
@@ -82,7 +82,7 @@ class Person:
     Represents a single person in the problem known as Newcomb's paradox. The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
     ----------
     Arguments:
-        chance: Callable = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
+        chance: Callable[[], float] = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
     ----------
     Attributes:
         Instance:
@@ -102,7 +102,7 @@ class Person:
 
     def __init__(
         self,
-        chance: Callable = random,
+        chance: Callable[[], float] = random,
     ) -> None:
         """
         Defines:
@@ -305,18 +305,18 @@ class Simulation:
         y: int = 100000, The amount of money in box 2 (mystery box) when box 2 is the single pick
         z: int = 0, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
         people: int = 1, How many people to simulate
-        chances: Callable = random, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
-        robot: Callable = predict, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+        chances: Callable[[], float] = random, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+        robot: Callable[[Predict, Any]] = predict, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
     ----------
     Attributes:
         Instance:
             x: int, The amount of money in box 1 (revealed box)
             y: int, The amount of money in box 2 (mystery box) when box 2 is the single pick
             z: int, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
-            chances: Callable, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+            chances: Callable[[], float], A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
             n: int, How many people are partaking in the simulation
             people: ndarray, An array of individuals in the simulation
-            predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+            predictor: Callable[[Person, Any], int], A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
             labels: list[list[int]], A data structure to hold the predictions made for each person for each step
             tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
             fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
@@ -337,18 +337,18 @@ class Simulation:
         y: int = 1000000,
         z: int = 0,
         people: int = 1,
-        chances: Callable = random,
-        robot: Callable = predict,
+        chances: Callable[[], float] = random,
+        robot: Callable[[Person, Any], int] = fallable,
     ) -> None:
         """
         Defines:
             x: int, The amount of money in box 1 (revealed box)
             y: int, The amount of money in box 2 (mystery box) when box 2 is the single pick
             z: int, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
-            chances: Callable, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+            chances: Callable[[], float], A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
             n: int, How many people are partaking in the simulation
             people: ndarray, An array of individuals in the simulation
-            predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+            predictor: Callable[[Person, Any], int], A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
             labels: list[list[int]], A data structure to hold the predictions made for each person for each step
             tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
             fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
@@ -361,7 +361,7 @@ class Simulation:
         """The amount of money in box 2 (mystery box) when box 2 is the single pick"""
         self.z: int = z
         """The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together"""
-        self.chances: Callable = chances
+        self.chances: Callable[[], float] = chances
         """A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)"""
         self.n: int = people
         """How many people are partaking in the simulation"""
@@ -372,7 +372,7 @@ class Simulation:
             dtype = Person
         )
         """An array of individuals in the simulation"""
-        self.predictor: Callable = robot
+        self.predictor: Callable[[Person, Any], int] = robot
         """A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)"""
         self.labels: list[list[int]] = []
         """A data structure to hold the predictions made for each person for each step"""
@@ -384,6 +384,16 @@ class Simulation:
         """True negatives (defined as the number of times the robot predicted correctly the person will pick both the mystery box and the open box)"""
         self.fn: int = 0
         """False negatives (defined as the number of times the robot predicted incorrectly the person will pick the mystery box and the open box)"""
+
+    @override
+    def __hash__(self) -> int:
+        """
+        Defines a way to assign a unique hash index to the object
+        ----------
+        Returns:
+            output: int, The hash value
+        """
+        return id(self)
 
     def populate(
         self,
