@@ -1,11 +1,11 @@
 """
-Simulates a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
+Simulates a scenario known as the Newcomb's paradox, where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
 ----------
 todo fill this
 Contains:
 
     Person (class):
-        Represents a single person in the problem known as (todo insert problem). The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
+        Represents a single person in the problem known as Newcomb's paradox. The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
         ----------
         Arguments:
             chance: Callable = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
@@ -49,7 +49,7 @@ from typing import override
 # There is redundancy in the implementation I just don't care
 class Person:
     """
-    Represents a single person in the problem known as (todo insert problem). The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
+    Represents a single person in the problem known as Newcomb's paradox. The problem is a scenario where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
     ----------
     Arguments:
         chance: Callable = random, A function that determines the chance that the person chooses option 1 (the option with the one box mystery). Must return a float in [0, 1)
@@ -223,12 +223,12 @@ class Person:
 # The function has to be placed here so that Person is defined and so that Simulation can take the function as a default argument
 def predict(p: Person) -> int:
     """
-    Simulates the computer that predicts what a person will pick and populates the box
+    Simulates the computer that predicts what a person will pick and populates the boxes
     ----------
     Note: Will not populate the boxes
     ----------
     Arguments:
-        p: Person
+        p: Person, The person going into the room
     ----------
     Returns:
         output: int, The prediction. 1 indicates the single mystery box will be picked, 2 that both will be picked.
@@ -238,9 +238,34 @@ def predict(p: Person) -> int:
     else:
         return 2
 
+def fallable(p: Person, f: float = 0.05) -> int:
+    """
+    Simulates the computer that predicts what a person will pick and populates the boxes fallably
+    ----------
+    Note: Will not populate the boxes
+    ----------
+    Arguments:
+        p: Person, The person going into the room
+        f: float = 0.05, The rate with which the robot will not predict optimally
+    ----------
+    Returns:
+        output: int, The prediction. 1 indicates the single mystery box will be picked, 2 that both will be picked.
+    """
+    key: float = random()
+    if p.one > p.two:
+        if key > f:
+            return 1
+        else:
+            return 2
+    else:
+        if key > f:
+            return 2
+        else:
+            return 1
+
 class Simulation:
     """
-    Performs the full simulation of the problem (todo add problem name here).
+    Performs the full simulation of the problem Newcomb's paradox.
     ----------
     Arguments:
         x: int = 1000, The amount of money in box 1 (revealed box)
@@ -260,10 +285,10 @@ class Simulation:
             people: ndarray, An array of individuals in the simulation
             predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
             labels: list[list[int]], A data structure to hold the predictions made for each person for each step
-            tp: int = 0, True positives
-            fp: int = 0, False positives
-            tn: int = 0, True negatives
-            fn: int = 0, False negatives
+            tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
+            fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
+            tn: int = 0, True negatives (defined as the number of times the robot predicted correctly the person will pick both the mystery box and the open box)
+            fn: int = 0, False negatives (defined as the number of times the robot predicted incorrectly the person will pick the mystery box and the open box)
     ----------
     Methods:
         Instance:
@@ -291,10 +316,10 @@ class Simulation:
             people: ndarray, An array of individuals in the simulation
             predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
             labels: list[list[int]], A data structure to hold the predictions made for each person for each step
-            tp: int = 0, True positives
-            fp: int = 0, False positives
-            tn: int = 0, True negatives
-            fn: int = 0, False negatives
+            tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
+            fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
+            tn: int = 0, True negatives (defined as the number of times the robot predicted correctly the person will pick both the mystery box and the open box)
+            fn: int = 0, False negatives (defined as the number of times the robot predicted incorrectly the person will pick the mystery box and the open box)
         """
         self.x: int = x
         """The amount of money in box 1 (revealed box)"""
@@ -318,13 +343,13 @@ class Simulation:
         self.labels: list[list[int]] = [[0] * self.n]
         """A data structure to hold the predictions made for each person for each step"""
         self.tp: int = 0
-        """True positives"""
+        """True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)"""
         self.fp: int = 0
-        """False positives"""
+        """False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)"""
         self.tn: int = 0
-        """True negatives"""
+        """True negatives (defined as the number of times the robot predicted correctly the person will pick both the mystery box and the open box)"""
         self.fn: int = 0
-        """False negatives"""
+        """False negatives (defined as the number of times the robot predicted incorrectly the person will pick the mystery box and the open box)"""
 
     def populate(
         self,
@@ -371,6 +396,22 @@ class Simulation:
             person.track()
         self.labels.append([0] * self.n)
 
+    def metrics(self) -> tuple[float, float, float, float]:
+        """
+        Calculates metrics like the accuracy score (see the return values)
+        ----------
+        Returns:
+            accuracy: float = (self.tp + self.tn) / ( self.tp + self.tn + self.fp + self.fn)
+            precision: float = self.tp / (self.tp + self.fp)
+            recall: float = self.tp / (self.tp + self.fn)
+            f1: float = 2 * (precision * recall) / (precision + recall)
+        """
+        accuracy: float = (self.tp + self.tn) / ( self.tp + self.tn + self.fp + self.fn)
+        precision: float = self.tp / (self.tp + self.fp)
+        recall: float = self.tp / (self.tp + self.fn)
+        f1: float = 2 * (precision * recall) / (precision + recall)
+        return accuracy, precision, recall, f1
+
     def plot(
         self,
         components: list[str] = [
@@ -379,6 +420,7 @@ class Simulation:
             'differences',
             'ROI',
             # 'predictions',
+            'metrics',
         ],
         present: bool = False,
         output: str = '',
@@ -395,7 +437,8 @@ class Simulation:
                 'differences',
                 'ROI',
                 'predictions',
-            ], A set of plots to present in the common plot. Options include chances (presents a bar chart of the persons strategy), ROI (Presents the evolution of the person currency over time), differences (the change in currency between steps), predictions (The robot's choices), choices (the choice people made at each step)
+                'metrics',
+            ], A set of plots to present in the common plot. Options include chances (presents a bar chart of the persons strategy), ROI (Presents the evolution of the person currency over time), differences (the change in currency between steps), predictions (The robot's choices), choices (the choice people made at each step), metrics (presents a scatter plot of the robots metrics like accuracy)
             present: bool = False, Toggle presenting the image in a matplotlib GUI
             output: str = '', An output directory to dump the image to if saving is enabled (please add a trailing / yourself)
             name: str = 'simulation.png', An output filename to dump the image to if saving is enabled (should contain the file extension)
@@ -416,6 +459,18 @@ class Simulation:
         axes: ndarray = array(holder[1]).flatten()
         for idx, component in enumerate(components):
             ax: Axes = axes[idx]
+            if component == 'metrics':
+                eval: tuple[float, ...] = self.metrics()
+                marks = [0, 1, 2, 3]
+                labels = ['Accuracy', 'Precision', 'Recall', 'F1']
+                ax.scatter(range(len(eval)), eval)
+                ax.set_xticks(marks)
+                ax.set_xticklabels(labels)
+                ax.set_ylim((-0.05, 1.05))
+                ax.set_title('Metrics')
+                ax.set_xlabel('Metric')
+                ax.set_ylabel('Value')
+                ax.grid()
             if component == 'predictions':
                 pass
             if component == 'choices':
@@ -477,7 +532,7 @@ def main() -> None:
         output: None
     """
     cmd: Namespace = liner()
-    sim: Simulation = Simulation(cmd.x, cmd.y, cmd.z, cmd.people, robot = predict)
+    sim: Simulation = Simulation(cmd.x, cmd.y, cmd.z, cmd.people, robot = fallable)
     for _ in range(cmd.steps):
         sim.step()
     sim.plot(
