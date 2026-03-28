@@ -1,7 +1,6 @@
 """
 Simulates a scenario known as the Newcomb's paradox, where a person is called to enter a room with two boxes. Box 1 has an x amount of money in it and box two is a mystery box. There is a computer that will predict what the person that comes into the room will pick with a high accuracy. The computer makes its prediction before you walk in. If the computer predicts that you will choose the mystery box alone, it will populate the mystery box with an amount y that is way larger than x (y >> x). If the computer predicts that you will take both boxes, it populates the mystery box with an amount z smaller than x (usually 0). There is no picking just box 1.
 ----------
-todo fill this
 Contains:
 
     Person (class):
@@ -26,6 +25,37 @@ Contains:
                 plot, Plots the persons statistics. Includes: The change in the person currency over time, their strategy (chances), the relative change in currency over time
 
     Simulation (class):
+        Performs the full simulation of the problem Newcomb's paradox.
+        ----------
+        Arguments:
+            x: int = 1000, The amount of money in box 1 (revealed box)
+            y: int = 100000, The amount of money in box 2 (mystery box) when box 2 is the single pick
+            z: int = 0, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
+            people: int = 1, How many people to simulate
+            chances: Callable = random, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+            robot: Callable = predict, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+        ----------
+        Attributes:
+            Instance:
+                x: int, The amount of money in box 1 (revealed box)
+                y: int, The amount of money in box 2 (mystery box) when box 2 is the single pick
+                z: int, The amount of money in box 2 (mystery box) when both box 1 and 2 are picked together
+                chances: Callable, A function that should take no inputs that determines a sequential assignment of probabilities of a person picking just box 2 alone (mystery box)
+                n: int, How many people are partaking in the simulation
+                people: ndarray, An array of individuals in the simulation
+                predictor: Callable, A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)
+                labels: list[list[int]], A data structure to hold the predictions made for each person for each step
+                tp: int = 0, True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)
+                fp: int = 0, False positives (defined as the number of times the robot predicted incorrectly the person will pick only the mystery box)
+                tn: int = 0, True negatives (defined as the number of times the robot predicted correctly the person will pick both the mystery box and the open box)
+                fn: int = 0, False negatives (defined as the number of times the robot predicted incorrectly the person will pick the mystery box and the open box)
+        ----------
+        Methods:
+            Instance:
+                populate: Populates the boxes with money
+                step: Does a single simulation cycle for all the people in the simulation
+                plot: Plots key insights about the people and the steps simulated
+                winner: Returns the winner of the simulation (by most profit). The type is Person.
 
     predict (function): Simulates the computer that predicts what a person will pick and populates the box
 
@@ -43,7 +73,7 @@ from os import makedirs
 from os.path import exists, dirname, abspath
 from random import random
 from utils import liner
-from typing import override
+from typing import override, Any
 # from tqdm import tqdm
 
 # There is redundancy in the implementation I just don't care
@@ -101,9 +131,12 @@ class Person:
         Defines the value returned when the class is converted to a string
         ----------
         Returns:
-            output: str, The string representation of the hash of the object
+            output: str, The string representation of the stratrgy
         """
-        return str(self.__hash__())
+        if self.one > self.two:
+            return 'Mystery box'
+        else:
+            return 'Both boxes'
 
     @override
     def __hash__(self) -> int:
@@ -295,6 +328,7 @@ class Simulation:
             populate: Populates the boxes with money
             step: Does a single simulation cycle for all the people in the simulation
             plot: Plots key insights about the people and the steps simulated
+            winner: Returns the winner of the simulation (by most profit). The type is Person.
     """
 
     def __init__(
@@ -340,7 +374,7 @@ class Simulation:
         """An array of individuals in the simulation"""
         self.predictor: Callable = robot
         """A functions on how the robot predicts. Should take a single input, the person (from the Person class or an object with a self.one and self.two attribute)"""
-        self.labels: list[list[int]] = [[0] * self.n]
+        self.labels: list[list[int]] = []
         """A data structure to hold the predictions made for each person for each step"""
         self.tp: int = 0
         """True positives (defined as the number of times the robot predicted correctly the person will pick only the mystery box)"""
@@ -369,15 +403,22 @@ class Simulation:
         else:
             return (self.x, self.z)
 
-    def step(self) -> None:
+    def step(
+        self,
+        rargs: tuple[Any] = (), # pyright: ignore
+    ) -> None:
         """
         Does a single simulation cycle for all the people in the simulation
+        ----------
+        Arguments:
+            rargs: tuple[Any] = (), A tuple of arguments to pass the robot along with the person (in positions 0)
         ----------
         Returns:
             output: None
         """
+        self.labels.append([])
         for person in self.people:
-            pred: int = self.predictor(person)
+            pred: int = self.predictor(person, *rargs)
             self.labels[-1].append(pred)
             boxes: tuple[int, int] = self.populate(pred)
             actual: int = person.choose()
@@ -394,7 +435,6 @@ class Simulation:
             else:
                 person.currency += boxes[0] + boxes[1]
             person.track()
-        self.labels.append([0] * self.n)
 
     def metrics(self) -> tuple[float, float, float, float]:
         """
@@ -419,10 +459,11 @@ class Simulation:
             'choices',
             'differences',
             'ROI',
-            # 'predictions',
+            'predictions',
             'metrics',
         ],
         present: bool = False,
+        legend: bool = False,
         output: str = '',
         name: str = 'simulation.png',
         save: bool = False
@@ -440,6 +481,7 @@ class Simulation:
                 'metrics',
             ], A set of plots to present in the common plot. Options include chances (presents a bar chart of the persons strategy), ROI (Presents the evolution of the person currency over time), differences (the change in currency between steps), predictions (The robot's choices), choices (the choice people made at each step), metrics (presents a scatter plot of the robots metrics like accuracy)
             present: bool = False, Toggle presenting the image in a matplotlib GUI
+            legend: bool = False, Toggle putting a legend on the plot
             output: str = '', An output directory to dump the image to if saving is enabled (please add a trailing / yourself)
             name: str = 'simulation.png', An output filename to dump the image to if saving is enabled (should contain the file extension)
             save: bool = False, Toggle saving to a file
@@ -472,7 +514,14 @@ class Simulation:
                 ax.set_ylabel('Value')
                 ax.grid()
             if component == 'predictions':
-                pass
+                domain = range(self.n)
+                for step in self.labels:
+                    ax.scatter(range(self.n), step)
+                ax.set_ylim((0.9, 2.1))
+                ax.set_title('Predictions')
+                ax.set_xlabel('Step')
+                ax.set_ylabel('Prediction')
+                ax.grid()
             if component == 'choices':
                 domain: range = range(len(self.people[0].choices))
                 for person in self.people:
@@ -501,7 +550,9 @@ class Simulation:
             if component == 'ROI':
                 domain = range(len(self.people[0].ROI))
                 for person in self.people:
-                    ax.plot(domain, person.ROI, label = person.__hash__())
+                    ax.plot(domain, person.ROI, label = str(person), alpha = 0.7)
+                ax.plot(domain, [(self.x + self.y) * x for x in domain], label = 'Optimal', marker = 'o', linestyle = 'dotted', markersize = 4)
+                # ax.legend()
                 ax.set_title('Return On Investment')
                 ax.set_xlabel('Step')
                 ax.set_ylabel('Money')
@@ -515,7 +566,8 @@ class Simulation:
                 ax.set_xlabel('Step (0: between step 0 and 1)')
                 ax.set_ylabel('Change')
                 ax.grid()
-        # fig.legend()
+        if legend:
+            fig.legend()
         if present:
             show()
         if save:
@@ -523,6 +575,19 @@ class Simulation:
             final: str = output + name
             fig.savefig(final)
             assert exists(final)
+
+    def winner(self) -> Person:
+        """
+        Returns the winner of the simulation (by most profit). The type is Person.
+        """
+        pointer: Person
+        for i, person in enumerate(self.people):
+            if i == 0:
+                pointer = person
+                continue
+            if person.currency > pointer.currency:
+                pointer = person
+        return pointer
 
 def main() -> None:
     """
@@ -535,7 +600,9 @@ def main() -> None:
     sim: Simulation = Simulation(cmd.x, cmd.y, cmd.z, cmd.people, robot = fallable)
     for _ in range(cmd.steps):
         sim.step()
+        # sim.step(rargs = (0.05))
     sim.plot(
+        components = ['chances', 'ROI', 'metrics'],
         output = abspath(
             dirname(
                 dirname(
@@ -546,6 +613,7 @@ def main() -> None:
         name = 't1.png',
         save = True
     )
+    print(str(sim.winner()))
 
 if __name__ == "__main__":
     main()
